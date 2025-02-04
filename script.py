@@ -1,15 +1,11 @@
 import os
 import time
 import asyncio
-import logging
 
 import azure.cognitiveservices.speech as speechsdk
 import keyboard
 import pyautogui
 from groq import Groq
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%m/%d/%Y %I:%M:%S,%f %p"[:-3])
 
 # Configuration constants
 GROQ_API_KEY = os.environ.get("GROQ_KEY")
@@ -50,7 +46,7 @@ class SpeechHandler:
         """Handles recognized speech events."""
         text = evt.result.text
         pyautogui.write(text, interval=0.01)
-        logging.info(f"Recognized: {text}")
+        print(f"Recognized: {text}")
 
         self.text_length = len(text)
         # Schedule asynchronous AI processing safely on the main event loop
@@ -65,22 +61,22 @@ class SpeechHandler:
         if not self.is_running:
             self.recognizer.start_continuous_recognition()
             self.is_running = True
-            logging.info("Started recognizing")
+            print("Started recognizing")
 
     def stop_recognition(self):
         """Stops speech recognition and cleans up the typed text."""
         if self.is_running:
             self.recognizer.stop_continuous_recognition()
             self.is_running = False
-            logging.info("Stopped recognizing")
-            logging.info(f"Text length was: {self.text_length}")
+            print("Stopped recognizing")
+            print(f"Text length was: {self.text_length}")
             time.sleep(1)  # Brief pause before removing text
             pyautogui.write("\b" * self.text_length, interval=0.01)
 
 
 async def ai_process(message: str):
     """Calls the AI service with the provided message and writes the result."""
-    logging.info("AI received a message for processing")
+    print("AI received a message for processing")
     response = client.chat.completions.create(
         messages=[
             {
@@ -107,8 +103,8 @@ async def ai_process(message: str):
     )
 
     ai_response = response.choices[0].message.content
-    logging.info("AI processed the message")
-    logging.info(f"AI response: {ai_response}")
+    print("AI processed the message")
+    print(f"AI response: {ai_response}")
     pyautogui.write(ai_response, interval=0.01)
 
 
