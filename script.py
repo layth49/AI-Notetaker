@@ -11,7 +11,7 @@ from groq import Groq
 GROQ_API_KEY = os.environ.get("GROQ_KEY")
 SPEECH_KEY = os.environ.get("SPEECH_KEY")
 SPEECH_REGION = os.environ.get("SPEECH_REGION")
-AI_MODEL = "llama-3.3-70b-versatile"
+AI_MODEL = "gemma2-9b-it"
 
 # Initialize the Groq client
 client = Groq(api_key=GROQ_API_KEY)
@@ -33,9 +33,10 @@ class SpeechHandler:
             audio_config=audio_config
         )
 
+        self.text = ""
         self.text_length = 0
         self.is_running = False
-
+        
         # Connect the recognized event to the callback
         self.recognizer.recognized.connect(self.on_recognized)
 
@@ -44,13 +45,12 @@ class SpeechHandler:
 
     def on_recognized(self, evt: speechsdk.SpeechRecognitionEventArgs):
         """Handles recognized speech events."""
-        text = evt.result.text
-        pyautogui.write(text, interval=0.01)
-        print(f"Recognized: {text}")
+        self.text = evt.result.text
+        pyautogui.write(self.text, interval=0.01)
+        print(f"Recognized: {self.text}")
 
-        self.text_length = len(text)
-        # Schedule asynchronous AI processing safely on the main event loop
-        asyncio.run_coroutine_threadsafe(self.process_ai(text), self.loop)
+        self.text_length = len(self.text)
+        
 
     async def process_ai(self, message: str):
         """Processes the recognized message using AI."""
@@ -72,6 +72,9 @@ class SpeechHandler:
             print(f"Text length was: {self.text_length}")
             time.sleep(1)  # Brief pause before removing text
             pyautogui.write("\b" * self.text_length, interval=0.01)
+            # Schedule asynchronous AI processing safely on the main event loop
+            time.sleep(2)  # Brief pause before processing AI
+            asyncio.run_coroutine_threadsafe(self.process_ai(self.text), self.loop)
 
 
 async def ai_process(message: str):
@@ -82,13 +85,13 @@ async def ai_process(message: str):
             {
                 "role": "system",
                 "content": (
-                    "You are an AI note taking assistant that accurately transcribes speech, "
-                    "intelligently formats text, and processes real-time commands. You recognize "
+                    "You are a formatter that has to take voice transcription. "
+                    "You must intelligently format text and processes real-time commands. You recognize "
                     "and apply punctuation, fix capitalization, and prevent unnecessary all-caps. "
                     "Users can issue commands like 'New line', 'Scratch that', or 'Remove that line' "
                     "to modify text instantly. Post-processing ensures natural sentence flow by correcting "
                     "errors and removing filler words. Transcriptions must be near-instant. Your goal is "
-                    "to create a seamless, efficient, and user-friendly voice dictation experience."
+                    "to create a seamless, efficient, and user-friendly voice dictation experience. Don't ever say anything except the formatted text"
                 )
             },
             {
@@ -118,8 +121,8 @@ async def main():
     def on_ctrl_release(_):
         speech_handler.stop_recognition()
 
-    keyboard.on_press_key("ctrl", on_ctrl_press)
-    keyboard.on_release_key("ctrl", on_ctrl_release)
+    keyboard.on_press_key("insert", on_ctrl_press)
+    keyboard.on_release_key("insert", on_ctrl_release)
 
     try:
         while True:
