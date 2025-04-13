@@ -8,7 +8,7 @@
     <img src="assets/logo.png" alt="Logo">
   </a>
 
-<h3 align="center">AI Notetaker</h3>
+<h3 align="center">AI Voice Dictator</h3>
 
   <p align="center">
     A voice dictation app that uses an LLM to transcribe and format text in real-time
